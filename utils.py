@@ -20,7 +20,7 @@ import tensorflow as tf
 import tensorflow.keras
 from tensorflow.keras import optimizers
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv1D, Flatten, MaxPool1D, Dropout, BatchNormalization,LeakyReLU
+from tensorflow.keras.layers import Dense, Conv1D, Flatten, MaxPool1D, Dropout, BatchNormalization, LeakyReLU, Embedding, LSTM, Dense
 from tensorflow.keras.callbacks import ModelCheckpoint, Callback, EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.preprocessing.sequence import pad_sequences as k_pad_sequences
 
@@ -230,3 +230,14 @@ def class_weights(df, class_name) :
     weights = compute_class_weight(class_weight = "balanced", classes = classes, y = y)
     class_weights = {k: v for k, v in enumerate(weights)}
     return class_weights
+
+def build_model(vocab_size, embedding_size, max_len):
+    optimizer = 'adam'
+    loss = 'categorical_crossentropy'    
+    
+    model = Sequential()
+    model.add(Embedding(vocab_size+1, embedding_size, input_length=max_len))
+    model.add(LSTM(64, return_sequences=False))
+    model.add(Dense(2, activation='softmax'))
+    model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
+    return model
