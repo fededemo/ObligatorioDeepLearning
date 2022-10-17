@@ -220,3 +220,13 @@ def load_test_sequences_and_generate_prediction_file(model, test_data, max_len):
     test_ids = np.array(test_ids).reshape(-1,1)
 
     return gen_csv_file(test_ids, pred, 'class')
+
+def class_weights(df, class_name) :
+    # Hint: usar
+    # http://scikit-learn.org/stable/modules/generated/sklearn.utils.class_weight.compute_class_weight.html
+    y = df[class_name]
+    classes = np.unique(y)
+    #weights = {i : 1 for i in range(categories[class_name].shape[0])}
+    weights = compute_class_weight(class_weight = "balanced", classes = classes, y = y)
+    class_weights = {k: v for k, v in enumerate(weights)}
+    return class_weights
