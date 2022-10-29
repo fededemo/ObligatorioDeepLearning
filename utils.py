@@ -4,11 +4,13 @@
 import numpy as np
 import pandas as pd
 import warnings
+import datetime as dt
 
 # ML
 import scipy
 import sklearn
 from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.utils.class_weight import compute_class_weight
 from sklearn import metrics
 
 
@@ -203,7 +205,7 @@ def predict_test(model, data):
     pred = np.argmax(prob, axis=1).reshape(-1,1)    
     return pred
 
-def gen_csv_file(test_ids, pred, class_name):
+def gen_csv_file(test_ids, pred, class_name, name):
     output = np.stack((test_ids, pred), axis=-1)
     output = output.reshape([-1, 2])
 
@@ -211,10 +213,10 @@ def gen_csv_file(test_ids, pred, class_name):
     df.columns = ['id','expected']
     
     df['expected'] = df['expected'].map(pd.Series(oh_categories[class_name]))    
-    df.to_csv("kaggle_test_output.csv", index = False, index_label = False)
+    df.to_csv("outputs/kaggle_test_output_"+name+'_'+dt.datetime.today().strftime('%Y%m%d_%H%M%S')+".csv", index = False, index_label = False)
     return df
 
-def load_test_sequences_and_generate_prediction_file(model, test_data, max_len):
+def load_test_sequences_and_generate_prediction_file(model, test_data, max_len,name):
     raw_sequences_X_test = load_sequences(test_data)
     padded_sequences = pad_sequences(raw_sequences_X_test, max_len)
     
@@ -223,7 +225,7 @@ def load_test_sequences_and_generate_prediction_file(model, test_data, max_len):
     test_ids = test_data['id']
     test_ids = np.array(test_ids).reshape(-1,1)
 
-    return gen_csv_file(test_ids, pred, 'class')
+    return gen_csv_file(test_ids, pred, 'class',name)
 
 def class_weights(df, class_name) :
     # Hint: usar
