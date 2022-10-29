@@ -8,8 +8,9 @@ import warnings
 # ML
 import scipy
 import sklearn
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn import metrics
+
 
 # Charts
 import matplotlib.pyplot as plt
@@ -23,6 +24,9 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv1D, Flatten, MaxPool1D, Dropout, BatchNormalization, LeakyReLU, Embedding, LSTM, Dense
 from tensorflow.keras.callbacks import ModelCheckpoint, Callback, EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.preprocessing.sequence import pad_sequences as k_pad_sequences
+
+#from scikeras.wrappers import KerasClassifier
+from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
 
 # One hot encoding
 
@@ -102,7 +106,7 @@ def load_sequences_and_target(data, y_field_name = 'class', one_hot = True):
     else:
         data_y = pd.DataFrame(label_encoding(data, y_field_name)) 
 
-    return (raw_sequences_X, data_y)	
+    return (raw_sequences_X, data_y)    
 
 def train(model,
                 train_X,
@@ -110,23 +114,23 @@ def train(model,
                 batch_size,
                 epochs,
                 validation_data_X,
-				validation_data_y,                 
-				patience,
-				class_weights):				
-	#Train
-	##Callbacks    
+                validation_data_y,                 
+                patience,
+                class_weights):             
+    #Train
+    ##Callbacks    
 
-	earlystopper = EarlyStopping(monitor='loss', patience=patience, verbose=1,restore_best_weights=True)
-	
-	training = model.fit(train_X
+    earlystopper = EarlyStopping(monitor='loss', patience=patience, verbose=1,restore_best_weights=True)
+    
+    training = model.fit(train_X
                         ,train_y
                         ,epochs=epochs
                         ,validation_data=(validation_data_X, validation_data_y)
                         ,batch_size=batch_size
                         ,callbacks=[earlystopper],
-						class_weight = class_weights)
-								
-	return training, model
+                        class_weight = class_weights)
+                                
+    return training, model
 
 def split(data_X, data_y):
     """ 
@@ -191,10 +195,10 @@ def eval_model(training, model, test_X, test_y, field_name = 'class'):
 
     # Loss function and accuracy
     test_res = model.evaluate(test_X, test_y.values, verbose=0)
-    print('Loss function: %s, accuracy:' % test_res[0], test_res[1])	
+    print('Loss function: %s, accuracy:' % test_res[0], test_res[1])    
     
     
-def predict_test(model, data):	
+def predict_test(model, data):  
     prob = model.predict(data)
     pred = np.argmax(prob, axis=1).reshape(-1,1)    
     return pred
@@ -231,13 +235,19 @@ def class_weights(df, class_name) :
     class_weights = {k: v for k, v in enumerate(weights)}
     return class_weights
 
-def build_model(vocab_size, embedding_size, max_len):
+def build_model(units, vocab_size, embedding_size, max_len):
     optimizer = 'adam'
     loss = 'categorical_crossentropy'    
-    
+
     model = Sequential()
     model.add(Embedding(vocab_size+1, embedding_size, input_length=max_len))
-    model.add(LSTM(64, return_sequences=False))
+    model.add(LSTM(units, return_sequences=False))
     model.add(Dense(2, activation='softmax'))
     model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
     return model
+
+def grid_search(params, cv):
+
+    model = KerasClassifier(build_fn=build_model)
+    gs = GridSearchCV(estimator=model, param_grid=params, cv=cv, verbose=0, n_jobs=-1)
+    return gs
