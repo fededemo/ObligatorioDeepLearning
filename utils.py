@@ -253,3 +253,14 @@ def grid_search(params, cv):
     model = KerasClassifier(build_fn=build_model)
     gs = GridSearchCV(estimator=model, param_grid=params, cv=cv, verbose=0, n_jobs=-1)
     return gs
+
+def sequences_augmentation (seqs, data_y, max_length) :
+    seqs_aug = seqs
+    data_y_aug = data_y
+    for i in range[len(seqs)]:
+      if len(seq) > max_length:
+        for j in range(len(seq) - max_length + 1):
+          seqs_aug.append(seq[j : j + max_length])
+          data_y_aug.append(data_y[i])
+    return (seqs_aug, data_y_aug)
+
