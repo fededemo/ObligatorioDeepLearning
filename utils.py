@@ -248,10 +248,19 @@ def build_model(units, vocab_size, embedding_size, max_len):
     model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
     return model
 
-def grid_search(params, cv):
+def build_improved_model(optimizer, loss, units, vocab_size, embedding_size, max_len):
+    model = Sequential()
+    model.add(Embedding(vocab_size+1, embedding_size, input_length=max_len))
+    model.add(LSTM(units, return_sequences=True))
+    model.add(LSTM(units, return_sequences=False))
+    model.add(Dense(2, activation='softmax'))
+    model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy', tf.keras.metrics.Precision()])
+    return model
 
-    model = KerasClassifier(build_fn=build_model)
-    gs = GridSearchCV(estimator=model, param_grid=params, cv=cv, verbose=0, n_jobs=-1)
+def grid_search(params, builder, cv):
+
+    model = KerasClassifier(build_fn=builder)
+    gs = GridSearchCV(estimator=model, param_grid=params, cv=cv, verbose=3, n_jobs=2)
     return gs
 
 def sequences_augmentation (seqs, data_y, max_length) :
