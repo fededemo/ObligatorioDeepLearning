@@ -4,15 +4,12 @@
 import numpy as np
 import pandas as pd
 import warnings
-import datetime as dt
 
 # ML
 import scipy
 import sklearn
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.utils.class_weight import compute_class_weight
+from sklearn.model_selection import train_test_split
 from sklearn import metrics
-
 
 # Charts
 import matplotlib.pyplot as plt
@@ -23,12 +20,9 @@ import tensorflow as tf
 import tensorflow.keras
 from tensorflow.keras import optimizers
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv1D, Flatten, MaxPool1D, Dropout, BatchNormalization, LeakyReLU, Embedding, LSTM, Dense
+from tensorflow.keras.layers import Dense, Conv1D, Flatten, MaxPool1D, Dropout, BatchNormalization,LeakyReLU
 from tensorflow.keras.callbacks import ModelCheckpoint, Callback, EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.preprocessing.sequence import pad_sequences as k_pad_sequences
-
-#from scikeras.wrappers import KerasClassifier
-from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
 
 # One hot encoding
 
@@ -108,7 +102,7 @@ def load_sequences_and_target(data, y_field_name = 'class', one_hot = True):
     else:
         data_y = pd.DataFrame(label_encoding(data, y_field_name)) 
 
-    return (raw_sequences_X, data_y)    
+    return (raw_sequences_X, data_y)	
 
 def train(model,
                 train_X,
@@ -116,23 +110,23 @@ def train(model,
                 batch_size,
                 epochs,
                 validation_data_X,
-                validation_data_y,                 
-                patience,
-                class_weights):             
-    #Train
-    ##Callbacks    
+				validation_data_y,                 
+				patience,
+				class_weights):				
+	#Train
+	##Callbacks    
 
-    earlystopper = EarlyStopping(monitor='loss', patience=patience, verbose=1,restore_best_weights=True)
-    
-    training = model.fit(train_X
+	earlystopper = EarlyStopping(monitor='loss', patience=patience, verbose=1,restore_best_weights=True)
+	
+	training = model.fit(train_X
                         ,train_y
                         ,epochs=epochs
                         ,validation_data=(validation_data_X, validation_data_y)
                         ,batch_size=batch_size
                         ,callbacks=[earlystopper],
-                        class_weight = class_weights)
-                                
-    return training, model
+						class_weight = class_weights)
+								
+	return training, model
 
 def split(data_X, data_y):
     """ 
@@ -197,15 +191,15 @@ def eval_model(training, model, test_X, test_y, field_name = 'class'):
 
     # Loss function and accuracy
     test_res = model.evaluate(test_X, test_y.values, verbose=0)
-    print('Loss function: %s, accuracy:' % test_res[0], test_res[1])    
+    print('Loss function: %s, accuracy:' % test_res[0], test_res[1])	
     
     
-def predict_test(model, data):  
+def predict_test(model, data):	
     prob = model.predict(data)
     pred = np.argmax(prob, axis=1).reshape(-1,1)    
     return pred
 
-def gen_csv_file(test_ids, pred, class_name, name):
+def gen_csv_file(test_ids, pred, class_name):
     output = np.stack((test_ids, pred), axis=-1)
     output = output.reshape([-1, 2])
 
@@ -213,10 +207,10 @@ def gen_csv_file(test_ids, pred, class_name, name):
     df.columns = ['id','expected']
     
     df['expected'] = df['expected'].map(pd.Series(oh_categories[class_name]))    
-    df.to_csv("outputs/kaggle_test_output_"+name+'_'+dt.datetime.today().strftime('%Y%m%d_%H%M%S')+".csv", index = False, index_label = False)
+    df.to_csv("kaggle_test_output.csv", index = False, index_label = False)
     return df
 
-def load_test_sequences_and_generate_prediction_file(model, test_data, max_len,name):
+def load_test_sequences_and_generate_prediction_file(model, test_data, max_len):
     raw_sequences_X_test = load_sequences(test_data)
     padded_sequences = pad_sequences(raw_sequences_X_test, max_len)
     
@@ -225,42 +219,14 @@ def load_test_sequences_and_generate_prediction_file(model, test_data, max_len,n
     test_ids = test_data['id']
     test_ids = np.array(test_ids).reshape(-1,1)
 
-    return gen_csv_file(test_ids, pred, 'class',name)
+    return gen_csv_file(test_ids, pred, 'class')
 
-def class_weights(df, class_name) :
-    # Hint: usar
-    # http://scikit-learn.org/stable/modules/generated/sklearn.utils.class_weight.compute_class_weight.html
-    y = df[class_name]
-    classes = np.unique(y)
-    #weights = {i : 1 for i in range(categories[class_name].shape[0])}
-    weights = compute_class_weight(class_weight = "balanced", classes = classes, y = y)
-    class_weights = {k: v for k, v in enumerate(weights)}
-    return class_weights
-
-def build_model(units, vocab_size, embedding_size, max_len):
-    optimizer = 'adam'
-    loss = 'categorical_crossentropy'    
-
-    model = Sequential()
-    model.add(Embedding(vocab_size+1, embedding_size, input_length=max_len))
-    model.add(LSTM(units, return_sequences=False))
-    model.add(Dense(2, activation='softmax'))
-    model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
-    return model
-
-def grid_search(params, cv):
-
-    model = KerasClassifier(build_fn=build_model)
-    gs = GridSearchCV(estimator=model, param_grid=params, cv=cv, verbose=0, n_jobs=-1)
-    return gs
-
-def sequences_augmentation (seqs, data_y, max_length) :
-  seqs_aug = seqs
+def sequences_augmentation (seqs, data_y, max_length, min_seq_len) :
+  seqs_aug = seqs.copy()
   data_y_aug = data_y
-  for i in range(len(seqs)):
-    if len(seqs[i]) > max_length:
-      for j in range(len(seqs[i]) - max_length + 1):
-        seqs_aug.append(seqs[i][j : j + max_length])
-        data_y_aug.append(data_y[i])
+  seqs_len = len(seqs)
+  for i in range(seqs_len):
+    if len(seqs[i]) > min_seq_len:
+      seqs_aug.append(seqs[i][-max_length:])
+      data_y_aug = data_y_aug.append(data_y[i:i+1])
   return (seqs_aug, data_y_aug)
-
