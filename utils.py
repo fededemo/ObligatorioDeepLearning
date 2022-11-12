@@ -257,10 +257,11 @@ def grid_search(params, builder, cv):
     gs = GridSearchCV(estimator=model, param_grid=params, cv=cv, verbose=3, n_jobs=2)
     return gs
 
-def sequences_augmentation (seqs, data_y, max_length) :
-  seqs_aug = seqs
+def sequences_augmentation (seqs, data_y, max_length, min_seq_len) :
+  seqs_aug = seqs.copy()
   data_y_aug = data_y
   seqs_len = len(seqs)
+  for i in range(seqs_len):
     if len(seqs[i]) > min_seq_len:
       seqs_aug.append(seqs[i][-max_length:])
       data_y_aug = data_y_aug.append(data_y[i:i+1])
