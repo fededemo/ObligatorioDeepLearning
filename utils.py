@@ -221,11 +221,46 @@ def load_test_sequences_and_generate_prediction_file(model, test_data, max_len):
 
     return gen_csv_file(test_ids, pred, 'class')
 
-def sequences_augmentation (seqs, data_y, max_length, min_seq_len) :
   seqs_aug = seqs.copy()
+def class_weights(df, class_name) :
+    # http://scikit-learn.org/stable/modules/generated/sklearn.utils.class_weight.compute_class_weight.html
+    y = df[class_name]
+    classes = np.unique(y)
+    #weights = {i : 1 for i in range(categories[class_name].shape[0])}
+    weights = compute_class_weight(class_weight = "balanced", classes = classes, y = y)
+    class_weights = {k: v for k, v in enumerate(weights)}
+    return class_weights
+
+def build_model(units, vocab_size, embedding_size, max_len):
+    optimizer = 'adam'
+    loss = 'categorical_crossentropy'    
+
+    model = Sequential()
+    model.add(Embedding(vocab_size+1, embedding_size, input_length=max_len))
+    model.add(LSTM(units, return_sequences=False))
+    model.add(Dense(2, activation='softmax'))
+    model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
+    return model
+
+def build_improved_model(optimizer, loss, units, vocab_size, embedding_size, max_len):
+    model = Sequential()
+    model.add(Embedding(vocab_size+1, embedding_size, input_length=max_len))
+    model.add(LSTM(units, return_sequences=True))
+    model.add(LSTM(units, return_sequences=False))
+    model.add(Dense(2, activation='softmax'))
+    model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy', tf.keras.metrics.Precision()])
+    return model
+
+def grid_search(params, builder, cv):
+
+    model = KerasClassifier(build_fn=builder)
+    gs = GridSearchCV(estimator=model, param_grid=params, cv=cv, verbose=3, n_jobs=2)
+    return gs
+
+def sequences_augmentation (seqs, data_y, max_length) :
+  seqs_aug = seqs
   data_y_aug = data_y
   seqs_len = len(seqs)
-  for i in range(seqs_len):
     if len(seqs[i]) > min_seq_len:
       seqs_aug.append(seqs[i][-max_length:])
       data_y_aug = data_y_aug.append(data_y[i:i+1])
