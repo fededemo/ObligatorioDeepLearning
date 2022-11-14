@@ -10,6 +10,7 @@ import scipy
 import sklearn
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
+import datetime as dt
 
 # Charts
 import matplotlib.pyplot as plt
@@ -219,7 +220,7 @@ def gen_csv_file(test_ids, pred, class_name,name):
     df.columns = ['id', 'expected']
 
     df['expected'] = df['expected'].map(pd.Series(oh_categories[class_name]))
-    df.to_csv("kaggle_test_output"+name+dt.datetime.today().strftime('%Y%m%d_%H%M%S')+".csv", index=False, index_label=False)
+    df.to_csv("./kaggle_data/kaggle_test_output"+name+dt.datetime.today().strftime('%Y%m%d_%H%M%S')+".csv", index=False, index_label=False)
     return df
 
 
