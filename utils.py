@@ -1,16 +1,12 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# Common packages
 import numpy as np
 import pandas as pd
 import warnings
-
+import datetime as dt
 # ML
 import scipy
 import sklearn
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn import metrics
-import datetime as dt
 
 # Charts
 import matplotlib.pyplot as plt
@@ -21,9 +17,11 @@ import tensorflow as tf
 import tensorflow.keras
 from tensorflow.keras import optimizers
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv1D, Flatten, MaxPool1D, Dropout, BatchNormalization, LeakyReLU
+from tensorflow.keras.layers import Dense, Conv1D, MaxPool1D, Dropout, Embedding, LSTM, Dense, BatchNormalization
 from tensorflow.keras.callbacks import ModelCheckpoint, Callback, EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
 from tensorflow.keras.preprocessing.sequence import pad_sequences as k_pad_sequences
+from typing import List, Tuple
 
 # One hot encoding
 
@@ -155,7 +153,6 @@ def split(data_X, data_y):
 
     return X_train, X_test, X_val, y_train, y_test, y_val
 
-
 def eval_model(training, model, test_X, test_y, field_name='class'):
     """
     Model evaluation: plots, classification report
@@ -205,7 +202,6 @@ def eval_model(training, model, test_X, test_y, field_name='class'):
     test_res = model.evaluate(test_X, test_y.values, verbose=0)
     print('Loss function: %s, accuracy:' % test_res[0], test_res[1])
 
-
 def predict_test(model, data):
     prob = model.predict(data)
     pred = np.argmax(prob, axis=1).reshape(-1, 1)
@@ -241,13 +237,13 @@ def class_weights(df, class_name):
     y = df[class_name]
     classes = np.unique(y)
     # weights = {i : 1 for i in range(categories[class_name].shape[0])}
-    weights = compute_class_weight(class_weight="balanced", classes=classes, y=y)
+    weights = sklearn.utils.compute_class_weight(class_weight="balanced", classes=classes, y=y)
     class_weights = {k: v for k, v in enumerate(weights)}
     return class_weights
 
 
 def build_model(units, vocab_size, embedding_size, max_len):
-    optimizer = 'adam'
+    optimizer = 'adam' 
     loss = 'categorical_crossentropy'
 
     model = Sequential()
@@ -264,7 +260,7 @@ def build_improved_model(optimizer, loss, units, vocab_size, embedding_size, max
     model.add(LSTM(units, return_sequences=True))
     model.add(LSTM(units, return_sequences=False))
     model.add(Dense(2, activation='softmax'))
-    model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy', tf.keras.metrics.Precision()])
+    model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy', tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
     return model
 
 
