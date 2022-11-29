@@ -24,7 +24,6 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences as k_pad_seque
 from typing import List, Tuple
 
 # One hot encoding
-
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 
 oh_enc = OneHotEncoder()
@@ -279,3 +278,24 @@ def sequences_augmentation(seqs, data_y, max_length, min_seq_len):
             seqs_aug.append(seqs[i][-max_length:])
             data_y_aug = data_y_aug.append(data_y[i:i + 1])
     return seqs_aug, data_y_aug
+
+
+def plot_data(data, labels, title, has_class=True):
+    bar_plot_width = 0.35
+    plt.figure(figsize=(20,10))
+
+    data_to_plot = data
+    if has_class:
+        data_to_plot = data['class']
+
+    plt.bar(labels, data_to_plot.value_counts(), bar_plot_width, color=['#7f6d5f','#557f2d'])
+    plt.title(title)
+    plt.ylabel("# Counts")
+
+    for x, y in zip(labels, data_to_plot.value_counts()):
+        plt.annotate(s=f'{y:,}',
+                    xy=(x,y), 
+                    textcoords="offset points",
+                    xytext=(0,10), 
+                    ha='center',
+                    fontweight='bold')
