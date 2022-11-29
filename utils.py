@@ -7,6 +7,8 @@ import scipy
 import sklearn
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn import metrics
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_recall_fscore_support, classification_report
+
 
 # Charts
 import matplotlib.pyplot as plt
@@ -24,12 +26,14 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences as k_pad_seque
 from typing import List, Tuple
 
 # One hot encoding
+
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 
 oh_enc = OneHotEncoder()
 le_enc = LabelEncoder()
 oh_categories = {}
 oh_class_indices = {}
+
 
 
 def setup_onehot(df):
@@ -200,6 +204,10 @@ def eval_model(training, model, test_X, test_y, field_name='class'):
     # Loss function and accuracy
     test_res = model.evaluate(test_X, test_y.values, verbose=0)
     print('Loss function: %s, accuracy:' % test_res[0], test_res[1])
+
+    precision, recall, f1, _ = precision_recall_fscore_support(test_truth, test_pred, average='macro')
+
+    return test_res[1], precision, recall, f1
 
 def predict_test(model, data):
     prob = model.predict(data)
