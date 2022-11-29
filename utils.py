@@ -91,9 +91,9 @@ def load_sequences(seqs_df):
     return seqs
 
 
-def pad_sequences(seqs, max_len):
+def pad_sequences(seqs, max_len, truncating='pre'):
     # Use keras preprocessing to do padding
-    padded_seqs = k_pad_sequences(seqs, maxlen=max_len, padding='pre', value=0)
+    padded_seqs = k_pad_sequences(seqs, maxlen=max_len, padding='pre', value=0,truncating=truncating)
     return padded_seqs
 
 
