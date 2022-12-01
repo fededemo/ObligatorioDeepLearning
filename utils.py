@@ -34,8 +34,6 @@ le_enc = LabelEncoder()
 oh_categories = {}
 oh_class_indices = {}
 
-
-
 def setup_onehot(df):
     # Fit one hot encoder
     oh_enc.fit(class_columns(df))
@@ -90,11 +88,11 @@ def load_sequences(seqs_df):
         seqs.append(clean_seq)
     return seqs
 
-
 def pad_sequences(seqs, max_len, truncating='pre'):
     # Use keras preprocessing to do padding
     padded_seqs = k_pad_sequences(seqs, maxlen=max_len, padding='pre', value=0,truncating=truncating)
     return padded_seqs
+
 
 
 def replace(seq, symbols, new_symbol):
@@ -208,6 +206,7 @@ def eval_model(training, model, test_X, test_y, field_name='class'):
     precision, recall, f1, _ = precision_recall_fscore_support(test_truth, test_pred, average='macro')
 
     return test_res[1], precision, recall, f1
+
 
 def predict_test(model, data):
     prob = model.predict(data)
