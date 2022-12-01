@@ -276,17 +276,20 @@ def grid_search(params, builder, cv):
     return gs
 
 
-def sequences_augmentation(seqs, data_y, max_length, min_seq_len):
+def sequences_augmentation(seqs, data_y, max_length, windows):
     seqs_aug = seqs.copy()
     data_y_aug = data_y
     seqs_len = len(seqs)
     for i in range(seqs_len):
-        if len(seqs[i]) > min_seq_len:
-            seqs_aug.append(seqs[i][-max_length:])
-            data_y_aug = data_y_aug.append(data_y[i:i + 1])
+        len_seq_i = len(seqs[i])
+        if len_seq_i > max_length:
+            for j in range(windows):
+                if len_seq_i >= max_length + j+1:
+                    seqs_aug.append(seqs[i][-(max_length+1+j):-(j+1)])
+                    data_y_aug = data_y_aug.append(data_y[i: i+1])
     return seqs_aug, data_y_aug
-
-
+                    
+                        
 def plot_data(data, labels, title, has_class=True):
     bar_plot_width = 0.35
     plt.figure(figsize=(20,10))
